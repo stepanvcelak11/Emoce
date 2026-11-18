@@ -4,9 +4,10 @@
 
 ## Co umí
 - **Mapa nálady**: energie × příjemnost ve čtyřech barvách (Napětí, Rozzáření, Útlum, Klid) a 72 českých emocí s vysvětlením.
-- **Kontext**: štítky (kde, s kým, co dělám, tělo/spánek, počasí) a vlastní štítky.
-- **Psaní**: poznámky a básně k záznamům i samostatně, podněty k psaní, diktování.
-- **Deník**: kalendář měsíce s barevnými tečkami a časová osa.
+- **Kontext**: štítky (kde, s kým, co dělám, pocity v těle, zdraví a spánek, počasí) a vlastní štítky.
+- **Porozumění emocím**: u každé emoce podobné emoce pro srovnání, na hlavní obrazovce emoce dne.
+- **Psaní**: poznámky a básně k záznamům i samostatně, podněty k psaní, diktování, automatické ukládání konceptů, večerní ohlédnutí, vzpomínky na starší texty a hledání.
+- **Deník**: kalendář měsíce s barevnými tečkami, časová osa a rok v barvách.
 - **Přehled**: rozložení nálad, nejčastější emoce, denní doba, postřehy ze štítků, co pomáhá.
 - **Co pomáhá**: dechová a uzemňovací cvičení a vlastní osvědčené věci s hodnocením.
 - **Soukromí**: data v soukromém prostoru uživatele, volitelný PIN zámek.

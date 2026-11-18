@@ -188,6 +188,18 @@ textarea{resize:vertical}
 .info p{margin:4px 0 0}
 .info .mine{margin-top:8px;font-style:italic;font-family:var(--font-display);font-size:16px}
 .tagcat{display:grid;gap:8px}
+.sim{margin-top:12px;display:grid;gap:6px}
+.small-chip{padding:5px 11px;font-size:13px}
+.wotd{display:grid;gap:6px}
+.wotd .w{font-family:var(--font-display);font-size:30px;line-height:1.1;display:flex;align-items:center;gap:10px}
+.memory{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.memory .poem{font-family:var(--font-display);font-style:italic;font-size:17px;line-height:1.5;white-space:pre-wrap;margin-top:6px;overflow-wrap:anywhere}
+.draft{display:grid;gap:8px;background:color-mix(in srgb,var(--q-yellow) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--q-yellow) 40%,var(--line));border-radius:var(--r);padding:14px 16px}
+.year{display:grid;grid-template-columns:30px repeat(31,1fr);gap:2px;margin-top:10px;align-items:center}
+.year .m{font-size:11px;color:var(--muted);font-weight:700}
+.year button{aspect-ratio:1;border:0;border-radius:2px;padding:0;background:var(--surface-2);min-width:0}
+.year button.has{background:var(--q)}
+.year button.out{visibility:hidden}
 .writebox{font-family:var(--font-display);font-size:19px;line-height:1.6;min-height:42vh;border-radius:14px;padding:16px;background:var(--surface)}
 .writer-title{font-family:var(--font-display);font-size:24px;border:0;background:transparent;padding:4px 0}
 .writer-title:focus-visible{outline:none;border-bottom:1px solid var(--line)}
@@ -363,10 +375,12 @@ const TAGCATS=[
  ["Kde jsem",["doma","v práci","ve škole","venku","na cestě","u přátel"]],
  ["S kým",["sám/sama","partner/ka","rodina","přátelé","kolegové","cizí lidé"]],
  ["Co dělám",["práce","učení","odpočinek","pohyb","jídlo","sociální sítě","tvoření","péče o druhé"]],
- ["Tělo",["dobrý spánek","špatný spánek","kofein","alkohol","nemoc","menstruace","hlad"]],
+ ["V těle cítím",["sevřený hrudník","knedlík v krku","bušení srdce","motýli v břiše","napjatá ramena","stažený žaludek","těžké tělo","neklidné ruce","slzy na krajíčku","lehkost","teplo u srdce","uvolněné tělo"]],
+ ["Zdraví a režim",["dobrý spánek","špatný spánek","kofein","alkohol","nemoc","menstruace","hlad"]],
  ["Počasí",["slunečno","zataženo","déšť"]],
 ];
 
+const BODY=new Set(TAGCATS.find(c=>c[0]==="V těle cítím")[1]);
 const HELPS=[
  {id:"box",q:["red","yellow"],n:"Čtvercové dýchání",d:"Nádech na 4, zadržet na 4, výdech na 4, zadržet na 4. Zklidní tělo během minuty.",kind:"breath",pattern:[["Nádech",4],["Zadrž",4],["Výdech",4],["Zadrž",4]]},
  {id:"longexhale",q:["red","blue"],n:"Dlouhý výdech",d:"Nádech na 4, výdech na 6. Delší výdech zpomaluje srdce.",kind:"breath",pattern:[["Nádech",4],["Výdech",6]]},
@@ -496,6 +510,7 @@ const allTags=()=>{const c=S.settings.customTags||[];return c.length?TAGCATS.con
 const allHelps=()=>(S.settings.customHelps||[]).map(h=>Object.assign({kind:"custom",custom:true},h)).concat(HELPS);
 const helpById=id=>allHelps().find(h=>h.id===id);
 const entriesSorted=()=>Object.values(S.entries).sort((a,b)=>b.ts-a.ts);
+function similar(m,k=3){return allEmotions().filter(x=>x.q===m.q&&x.id!==m.id).sort((a,b)=>((a.e-m.e)**2+(a.p-m.p)**2)-((b.e-m.e)**2+(b.p-m.p)**2)).slice(0,k)}
 const emoNames=e=>(e.emos||[]).map(id=>emo(id)?.n).filter(Boolean);
 function helpScores(){
   const m={};
@@ -506,7 +521,7 @@ function helpScores(){
 
 /* ───────────── UI stav ───────────── */
 const TABS={dnes:"Dnes",denik:"Deník",psani:"Psaní",prehled:"Přehled",vice:"Více"};
-const ui={tab:"dnes",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),selDay:null,range:30,wf:"all",more:null,dictQ:"all",dictS:"",sheet:null};
+const ui={tab:"dnes",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),selDay:null,range:30,wf:"all",more:null,dictQ:"all",dictS:"",sheet:null,jmode:"month",year:new Date().getFullYear(),ws:""};
 function setTabFromHash(){const h=(location.hash||"").slice(1);ui.tab=TABS[h]?h:"dnes"}
 
 function render(){
@@ -519,12 +534,50 @@ function render(){
 
 /* ───────────── Dnes ───────────── */
 function greeting(){const h=new Date().getHours();return h<5?"Dobrou noc":h<10?"Dobré ráno":h<18?"Dobrý den":"Dobrý večer"}
-function todayPrompt(){const d=Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);return PROMPTS[d%PROMPTS.length]}
+const dayIndex=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
+function todayPrompt(){return PROMPTS[dayIndex()%PROMPTS.length]}
+function ago(ts){const a=new Date();a.setHours(0,0,0,0);const b=new Date(ts);b.setHours(0,0,0,0);const n=Math.round((a-b)/864e5);
+  if(n<=0)return "dnes";if(n===1)return "včera";if(n<7)return "před "+n+" dny";
+  if(n<30){const w=Math.round(n/7);return w===1?"před týdnem":"před "+w+" týdny"}
+  if(n<365){const m=Math.round(n/30);return m===1?"před měsícem":"před "+m+" měsíci"}
+  const y=Math.round(n/365);return y===1?"před rokem":"před "+y+" lety"}
+function draftCard(){
+  const d=LS.get("emoce.draft",null);if(!d||!d.state||ui.sheet)return "";
+  const t=d.kind==="flow"?d.state.note:((d.state.title?d.state.title+"\n":"")+(d.state.text||""));
+  return `<section class="draft"><div class="label">Rozepsáno ${esc(ago(d.at))}</div>
+    <div class="note-ex">${esc((t||"").slice(0,140))}${(t||"").length>140?"…":""}</div>
+    <div class="btn-row"><button class="btn primary" data-a="draft-open">Pokračovat</button><button class="btn" data-a="draft-drop">Zahodit</button></div></section>`;
+}
+function wordCard(){
+  const m=EMOTIONS[(dayIndex()*7)%EMOTIONS.length];
+  const last=entriesSorted().find(e=>(e.emos||[]).includes(m.id));
+  return `<section class="card wotd" style="${qv(m.q)}"><div class="label">Emoce dne</div>
+    <div class="w"><span class="qdot" style="width:14px;height:14px"></span>${esc(m.n)}</div>
+    <p style="margin:0">${esc(m.d)}</p>
+    <p class="small muted" style="margin:0">Podobné: ${similar(m).map(x=>esc(x.n)).join(", ")}. ${last?"Naposledy jsi ji zapsal(a) "+ago(last.ts)+".":"Zatím jsi ji nezapsal(a). Všimneš si jí dnes?"}</p></section>`;
+}
+function memoryCard(){
+  const lim=Date.now()-6*864e5;
+  const c=[];Object.values(S.writings).forEach(w=>{if(w.ts<lim&&(w.text||"").trim())c.push({k:"w",o:w})});
+  Object.values(S.entries).forEach(e=>{if(e.ts<lim&&(e.note||"").trim())c.push({k:"e",o:e})});
+  if(!c.length)return "";
+  c.sort((a,b)=>a.o.ts-b.o.ts);const it=c[dayIndex()%c.length],o=it.o,t=it.k==="w"?o.text:o.note;
+  return `<button class="memory" data-a="${it.k==="w"?"open-writing":"open-entry"}" data-id="${esc(o.id)}" style="${o.q?qv(o.q):""}">
+    <span class="label">Z tvého deníku · ${esc(ago(o.ts))}</span>${it.k==="w"&&o.title?`<div style="font-family:var(--font-display);font-size:19px;margin-top:4px">${esc(o.title)}</div>`:""}
+    <div class="poem">${esc(t.length>280?t.slice(0,280)+"…":t)}</div></button>`;
+}
+function reviewCard(today){
+  if(new Date().getHours()<17)return "";
+  const tk=dayKey(Date.now());const w=Object.values(S.writings).find(x=>x.review===tk);
+  return `<section class="card"><div class="label">Večerní ohlédnutí</div>
+    ${w?`<p class="prompt">Dnešní ohlédnutí máš zapsané.</p><button class="btn" data-a="open-writing" data-id="${esc(w.id)}">Otevřít</button>`
+    :`<p class="prompt">Co bylo dnes dobré, co těžké a za co jsi vděčný(á)?</p><button class="btn primary" data-a="review">Ohlédnout se za dnem</button>`}</section>`;
+}
 function viewToday(){
   const all=entriesSorted(); const tk=dayKey(Date.now());
   const today=all.filter(e=>dayKey(e.ts)===tk);
   let h=`<div class="hello">${greeting()}. Jak ti je?</div>
-  <button class="cta" data-a="new"><strong>Jak se teď cítíš?</strong><span>Zapsat emoci</span></button>`;
+  <button class="cta" data-a="new"><strong>Jak se teď cítíš?</strong><span>Zapsat emoci</span></button>`+draftCard();
   if(!all.length){
     h+=`<div class="empty"><h3>Tvůj deník emocí je zatím prázdný</h3>
       Zápis zabere asi minutu:
@@ -543,6 +596,7 @@ function viewToday(){
     </section>`;
     if(today.length) h+=`<section class="list"><div class="label">Dnešní záznamy</div>${today.map(entryCard).join("")}</section>`;
   }
+  h+=reviewCard(today)+memoryCard()+wordCard();
   h+=`<section class="card"><div class="label">Podnět k psaní</div><p class="prompt">${esc(todayPrompt())}</p>
     <button class="btn" data-a="write-new" data-prompt="1">Napsat</button></section>`;
   return h;
@@ -566,7 +620,29 @@ function entryCard(e){
 }
 
 /* ───────────── Deník ───────────── */
+function viewYear(){
+  const y=ui.year,by={};
+  Object.values(S.entries).forEach(e=>{const k=dayKey(e.ts);if(!k.startsWith(y+"-"))return;(by[k]||(by[k]={red:0,yellow:0,blue:0,green:0,last:null,lt:0}))[e.q]++;if(e.ts>by[k].lt){by[k].lt=e.ts;by[k].last=e.q}});
+  const dom=o=>{let b=o.last,bc=o[b];QS.forEach(q=>{if(o[q]>bc){b=q;bc=o[q]}});return b};
+  const tot={red:0,yellow:0,blue:0,green:0};Object.values(by).forEach(o=>tot[dom(o)]++);
+  let g="";
+  for(let m=0;m<12;m++){const days=new Date(y,m+1,0).getDate();
+    g+=`<span class="m">${new Date(y,m,1).toLocaleDateString("cs-CZ",{month:"short"}).replace(".","")}</span>`;
+    for(let d=1;d<=31;d++){if(d>days){g+=`<button class="out" tabindex="-1" aria-hidden="true"></button>`;continue}
+      const k=y+"-"+pad(m+1)+"-"+pad(d),o=by[k];
+      g+=o?`<button class="has" style="${qv(dom(o))}" data-a="year-day" data-d="${k}" aria-label="${d}. ${m+1}.: ${Q[dom(o)].name}"></button>`:`<button tabindex="-1" aria-label="${d}. ${m+1}."></button>`}}
+  const n=Object.keys(by).length;
+  return `<section class="card"><div class="cal-head"><button class="iconbtn" data-a="year-prev" aria-label="Předchozí rok">‹</button><h2>${y}</h2><button class="iconbtn" data-a="year-next" aria-label="Další rok">›</button></div>
+    <div class="year">${g}</div>
+    <div class="legend">${QS.map(q=>`<span><span class="qdot" style="${qv(q)}"></span>${Q[q].name} ${tot[q]}</span>`).join("")}</div>
+    <p class="small muted" style="margin:10px 0 0">${n?`Každý čtvereček je den s převažující náladou. ${n} ${plural(n,"den","dny","dní")} se zápisem. Ťukni na den pro detail.`:"Tento rok zatím bez záznamů. Každý den se zápisem se tu vybarví."}</p></section>`;
+}
 function viewJournal(){
+  const seg=`<div class="seg" role="group" aria-label="Zobrazení"><button data-a="jmode" data-m="month" aria-pressed="${ui.jmode!=="year"}">Měsíc</button><button data-a="jmode" data-m="year" aria-pressed="${ui.jmode==="year"}">Rok v barvách</button></div>`;
+  if(ui.jmode==="year") return seg+viewYear();
+  return seg+viewMonth();
+}
+function viewMonth(){
   const m=ui.month, y=m.getFullYear(), mo=m.getMonth();
   const first=new Date(y,mo,1), days=new Date(y,mo+1,0).getDate();
   const lead=(first.getDay()+6)%7;
@@ -603,13 +679,17 @@ function viewWriting(){
   Object.values(S.writings).forEach(w=>items.push({kind:"w",ts:w.ts,o:w}));
   Object.values(S.entries).forEach(e=>{if(e.note&&e.note.trim()) items.push({kind:"e",ts:e.ts,o:e})});
   const f=ui.wf;
-  const shown=items.filter(i=>f==="all"||(f==="w"&&i.kind==="w")||(f==="e"&&i.kind==="e")).sort((a,b)=>b.ts-a.ts);
+  const qs=norm(ui.ws.trim());
+  const hay=i=>i.kind==="w"?(i.o.title||"")+" "+i.o.text:i.o.note+" "+emoNames(i.o).join(" ");
+  const shown=items.filter(i=>(f==="all"||(f==="w"&&i.kind==="w")||(f==="e"&&i.kind==="e"))&&(!qs||norm(hay(i)).includes(qs))).sort((a,b)=>b.ts-a.ts);
   let h=`<div class="section-h"><div class="seg" role="group" aria-label="Filtr">
      <button data-a="wf" data-f="all" aria-pressed="${f==="all"}">Vše</button>
      <button data-a="wf" data-f="w" aria-pressed="${f==="w"}">Texty a básně</button>
      <button data-a="wf" data-f="e" aria-pressed="${f==="e"}">K záznamům</button></div>
-     <button class="btn primary" data-a="write-new">Nový text</button></div>`;
-  if(!shown.length){
+     <button class="btn primary" data-a="write-new">Nový text</button></div>`+draftCard()+
+     (items.length>3?`<input type="search" id="wSearch" placeholder="Hledat v textech…" value="${esc(ui.ws)}" aria-label="Hledat v textech">`:"");
+  if(!shown.length&&qs){h+=`<div class="empty">Nic nenalezeno pro „${esc(ui.ws)}“.</div>`}
+  else if(!shown.length){
     h+=`<div class="empty"><h3>Místo pro tvoje slova</h3>Sem patří básně, útržky a myšlenky o tom, jak se cítíš. Najdeš tu i poznámky, které si připíšeš k jednotlivým záznamům. Psát můžeš kdykoli, i bez zápisu emoce.</div>`;
   }else{
     h+=`<section class="list">`+shown.map(i=>{
@@ -671,9 +751,12 @@ function insights(es,base){
   const out=[]; const n=es.length;
   const tc={};es.forEach(e=>(e.tags||[]).forEach(t=>{const o=tc[t]||(tc[t]={n:0,p:0,hi:0});o.n++;if(e.q==="yellow"||e.q==="green")o.p++;if(e.q==="red"||e.q==="yellow")o.hi++}));
   const tagI=[];
-  for(const [t,o] of Object.entries(tc)){ if(o.n<3||o.n===n) continue;
+  for(const [t,o] of Object.entries(tc)){ if(o.n<3||o.n===n||BODY.has(t)) continue;
     const s=o.p/o.n, d=s-base; if(Math.abs(d)>=.2) tagI.push({d,html:`Když je u záznamu <b>${esc(t)}</b>, cítíš se příjemně ${d<0?"jen ":""}v ${Math.round(s*100)} % případů. Jinak je to průměrně ${Math.round(base*100)} %.`,q:d>0?"green":"blue"}) }
   tagI.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)); out.push(...tagI.slice(0,4));
+  QS.forEach(q=>{const c={};es.forEach(e=>{if(e.q===q)(e.tags||[]).forEach(t=>{if(BODY.has(t))c[t]=(c[t]||0)+1})});
+    const top=Object.entries(c).filter(x=>x[1]>=2).sort((a,b)=>b[1]-a[1]).slice(0,2);
+    if(top.length)out.push({q,html:`<b>${Q[q].name}</b> se ti v těle nejčastěji ukazuje jako ${top.map(x=>"„"+esc(x[0])+"“").join(" a ")}.`})});
   // den v týdnu
   const wd=[0,0,0,0,0,0,0],wp=[0,0,0,0,0,0,0];es.forEach(e=>{const d=(new Date(e.ts).getDay()+6)%7;wd[d]++;if(e.q==="yellow"||e.q==="green")wp[d]++});
   const names=["v pondělí","v úterý","ve středu","ve čtvrtek","v pátek","v sobotu","v neděli"];
@@ -708,6 +791,7 @@ function moreDict(){
   <div class="seg">${[["all","Vše"]].concat(QS.map(k=>[k,Q[k].name])).map(([k,l])=>`<button data-a="dict-q" data-q="${k}" aria-pressed="${q===k}">${l}</button>`).join("")}</div>
   <div class="list">${list.map(e=>`<details class="emo-card" style="${qv(e.q)}"><summary><span class="qdot"></span>${esc(e.n)}<span class="small muted" style="margin-left:auto;font-weight:500">${Q[e.q].name}</span></summary>
     <p>${esc(e.d||"")}</p>
+    <p class="small muted">Podobné: ${similar(e).map(x=>esc(x.n)).join(", ")}</p>
     <label class="label" for="en-${e.id}">Co to znamená pro mě</label>
     <textarea id="en-${e.id}" data-note="${e.id}" rows="2" placeholder="Jak tuhle emoci prožíváš ty, kdy ji cítíš…">${esc(notes[e.id]||"")}</textarea>
     ${e.custom?`<div style="margin-top:8px"><button class="btn danger" data-a="emo-del" data-id="${e.id}">Odebrat vlastní emoci</button></div>`:""}
@@ -771,8 +855,8 @@ function moreAbout(){
 }
 
 /* ───────────── list (sheet) ───────────── */
-function openSheet(s){ui.sheet=s;renderSheet();$("#sheet").hidden=false;$("#sheet").scrollTop=0;document.body.style.overflow="hidden"}
-function closeSheet(){stopBreath();stopDictation();ui.sheet=null;$("#sheet").hidden=true;$("#sheet").innerHTML="";document.body.style.overflow="";render()}
+function openSheet(s){if(!s.dk)s.dk=newId("d");ui.sheet=s;renderSheet();$("#sheet").hidden=false;$("#sheet").scrollTop=0;document.body.style.overflow="hidden"}
+function closeSheet(){if(ui.sheet&&(ui.sheet.type==="writer"||ui.sheet.type==="flow")){clearTimeout(draftT);saveDraft()}stopBreath();stopDictation();ui.sheet=null;$("#sheet").hidden=true;$("#sheet").innerHTML="";document.body.style.overflow="";render()}
 function renderSheet(){
   const s=ui.sheet;if(!s)return;
   const el=$("#sheet");
@@ -789,7 +873,7 @@ function openFlow(entry){
 }
 function flowTop(step,max){
   return `<div class="sheet-top">${step>1&&typeof step==="number"?`<button class="btn ghost" data-a="flow-back">‹ Zpět</button>`:`<button class="btn ghost" data-a="sheet-close">Zavřít</button>`}
-   ${typeof step==="number"?`<div class="steps" aria-label="Krok ${step} ze ${max}">${[1,2,3].map(i=>`<i class="${i<=step?"on":""}"></i>`).join("")}</div>`:"<span></span>"}<span style="width:70px"></span></div>`;
+   ${typeof step==="number"?`<div class="steps" aria-label="Krok ${step} ze ${max}">${[1,2,3].map(i=>`<i class="${i<=step?"on":""}"></i>`).join("")}</div>`:"<span></span>"}${step>1&&typeof step==="number"?`<button class="btn ghost" data-a="sheet-close">Zavřít</button>`:`<span style="width:70px"></span>`}</div>`;
 }
 function sheetFlow(){
   const f=ui.sheet;
@@ -897,7 +981,9 @@ function updateMapUI(){
   $("#emoList").innerHTML=h;
   const fm=f.focus&&emo(f.focus);
   const note=fm&&(S.settings.emotionNotes||{})[fm.id];
-  $("#emoInfo").innerHTML=fm?`<div class="info" style="${qv(fm.q)}"><b>${esc(fm.n)}</b><p>${esc(fm.d||"")}</p>${note?`<div class="mine">Pro mě: ${esc(note)}</div>`:""}</div>`:"";
+  $("#emoInfo").innerHTML=fm?`<div class="info" style="${qv(fm.q)}"><b>${esc(fm.n)}</b><p>${esc(fm.d||"")}</p>${note?`<div class="mine">Pro mě: ${esc(note)}</div>`:""}
+    ${f.emos.includes(fm.id)?"":`<div style="margin-top:10px"><button class="btn" data-a="emo" data-id="${fm.id}">Vybrat ${esc(fm.n.toLowerCase())}</button></div>`}
+    <div class="sim"><span class="label">Podobné, ale jiné</span><div class="chips">${similar(fm).map(x=>`<button class="chip small-chip" data-a="emo-peek" data-id="${x.id}" style="${qv(x.q)}">${esc(x.n)}</button>`).join("")}</div></div></div>`:"";
   const nb=$("#nextBtn"); if(nb) nb.disabled=f.x==null;
 }
 function bindMap(){
@@ -1104,6 +1190,7 @@ const A={
     else{if(f.emos.length>=3){toast("Vyber nejvýš 3 emoce");return}f.emos.push(id);f.focus=id;
       const m=emo(id);if(m&&(f.x==null||f.search.trim()&&m.q!==f.q)){const p=emoPos(m);f.x=p.x;f.y=p.y;f.q=m.q}}
     updateMapUI()},
+  "emo-peek":t=>{ui.sheet.focus=t.dataset.id;updateMapUI()},
   "emo-all":()=>{ui.sheet.showAll=true;updateMapUI()},
   tag:t=>{const f=ui.sheet,v=t.dataset.t,i=f.tags.indexOf(v);if(i>=0)f.tags.splice(i,1);else f.tags.push(v);
     t.classList.toggle("sel",i<0);t.setAttribute("aria-pressed",String(i<0))},
@@ -1112,9 +1199,9 @@ const A={
     if(!f.tags.includes(v))f.tags.push(v);renderSheet()},
   "prompt-shuffle":()=>{const f=ui.sheet;readFlowInputs();f.prompt++;renderSheet()},
   mic:()=>toggleMic(),
-  "flow-save":async()=>{const f=ui.sheet;readFlowInputs();stopDictation();
+  "flow-save":async()=>{const f=ui.sheet;readFlowInputs();stopDictation();clearTimeout(draftT);LS.del("emoce.draft");
     const e={id:f.id||newId("e"),ts:f.ts,x:f.x,y:f.y,q:f.q,emos:f.emos,tags:f.tags,note:f.note.trim(),helped:f.helped||null};
-    if(f.editing){putEntry(e);closeSheet();toast("Změny uloženy");return}
+    if(f.editing){putEntry(e);ui.sheet=null;closeSheet();toast("Změny uloženy");return}
     f.id=e.id;f.step="help";putEntry(e);renderSheet();$("#sheet").scrollTop=0},
   "help-start":t=>{const f=ui.sheet;f.ex={id:t.dataset.id,i:0,text:""};f.step="ex";renderSheet();$("#sheet").scrollTop=0},
   "ex-next":()=>{ui.sheet.ex.i++;renderSheet()},
@@ -1136,10 +1223,11 @@ const A={
   "open-writing":t=>{const w=S.writings[t.dataset.id];if(w)openSheet(Object.assign({type:"writer"},clone(w)))},
   wq:t=>{const w=ui.sheet;readWriter();w.q=w.q===t.dataset.q?null:t.dataset.q;renderSheet()},
   "writer-save":()=>{const w=ui.sheet;readWriter();stopDictation();if(!w.text.trim()&&!w.title.trim()){toast("Zatím tu nic není");return}
-    putWriting({id:w.id||newId("w"),ts:w.ts||Date.now(),title:w.title.trim(),text:w.text,q:w.q||null});closeSheet();toast("Uloženo")},
+    clearTimeout(draftT);LS.del("emoce.draft");
+    putWriting({id:w.id||newId("w"),ts:w.ts||Date.now(),title:w.title.trim(),text:w.text,q:w.q||null,review:w.review||null});ui.sheet=null;closeSheet();toast("Uloženo")},
   "writer-del":()=>{readWriter();ui.sheet.confirm=true;renderSheet()},
   "writer-del-no":()=>{ui.sheet.confirm=false;renderSheet()},
-  "writer-del-yes":()=>{const id=ui.sheet.id;closeSheet();delWriting(id);toast("Text smazán")},
+  "writer-del-yes":()=>{const id=ui.sheet.id;LS.del("emoce.draft");ui.sheet=null;closeSheet();delWriting(id);toast("Text smazán")},
   range:t=>{ui.range=t.dataset.r==="all"?"all":Number(t.dataset.r);render()},
   more:t=>{ui.more=t.dataset.m;ui.wipe=false;render();window.scrollTo(0,0)},
   "more-back":()=>{ui.more=null;render()},
@@ -1165,6 +1253,16 @@ const A={
   wipe:()=>{ui.wipe=true;render()},
   "wipe-no":()=>{ui.wipe=false;render()},
   "wipe-yes":()=>wipeAll(),
+  "draft-open":()=>{const d=LS.get("emoce.draft",null);if(d&&d.state)openSheet(d.state)},
+  "draft-drop":()=>{LS.del("emoce.draft");render();toast("Koncept zahozen")},
+  review:()=>{const tk=dayKey(Date.now());const td=Object.values(S.entries).filter(e=>dayKey(e.ts)===tk);const c={};td.forEach(e=>c[e.q]=(c[e.q]||0)+1);
+    const dom=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
+    openSheet({type:"writer",id:null,title:"Ohlédnutí za dnem, "+new Date().toLocaleDateString("cs-CZ",{day:"numeric",month:"long"}),
+      text:"Co bylo dnes dobré:\n\n\nCo bylo těžké:\n\n\nZa co jsem vděčný(á):\n",q:dom?dom[0]:null,review:tk,promptText:""})},
+  jmode:t=>{ui.jmode=t.dataset.m;render()},
+  "year-prev":()=>{ui.year--;render()},
+  "year-next":()=>{ui.year++;render()},
+  "year-day":t=>{const [y,m]=t.dataset.d.split("-").map(Number);ui.month=new Date(y,m-1,1);ui.selDay=t.dataset.d;ui.jmode="month";render();window.scrollTo(0,0)},
   "copy-text":()=>{const ta=$("#plainText");const v=ta.value;
     try{navigator.clipboard.writeText(v).then(()=>toast("Zkopírováno"),()=>{ta.select();toast("Text je označený, zkopíruj ho")})}catch(e){ta.select();toast("Text je označený, zkopíruj ho")}},
 };
@@ -1173,6 +1271,13 @@ function readFlowInputs(){
   const ta=$("#noteTa");if(ta)f.note=ta.value;
   const ts=$("#tsIn");if(ts&&ts.value){const d=new Date(ts.value);if(!isNaN(d))f.ts=d.getTime()}
 }
+function saveDraft(){
+  const s=ui.sheet;if(!s)return;
+  const drop=()=>{const d=LS.get("emoce.draft",null);if(d&&d.state&&d.state.dk===s.dk)LS.del("emoce.draft")};
+  if(s.type==="flow"&&typeof s.step==="number"){readFlowInputs();if(s.note.trim())LS.set("emoce.draft",{kind:"flow",at:Date.now(),state:clone(s)});else drop()}
+  else if(s.type==="writer"){readWriter();if((s.text||"").trim()||(s.title||"").trim())LS.set("emoce.draft",{kind:"writer",at:Date.now(),state:clone(Object.assign({},s,{confirm:false}))});else drop()}
+}
+let draftT;
 function readWriter(){const w=ui.sheet;const t=$("#wTitle"),x=$("#wText");if(t)w.title=t.value;if(x)w.text=x.value}
 
 document.addEventListener("click",ev=>{const t=ev.target.closest("[data-a]");if(!t)return;const fn=A[t.dataset.a];if(fn){ev.preventDefault();fn(t,ev)}});
@@ -1180,6 +1285,8 @@ document.addEventListener("input",ev=>{
   const t=ev.target;
   if(t.id==="emoSearch"&&ui.sheet){ui.sheet.search=t.value;updateMapUI()}
   else if(t.id==="noteTa"&&ui.sheet)ui.sheet.note=t.value;
+  if(["noteTa","wText","wTitle"].includes(t.id)){clearTimeout(draftT);draftT=setTimeout(saveDraft,600)}
+  if(t.id==="wSearch"){ui.ws=t.value;const pos=t.selectionStart;render();const n=$("#wSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}
   else if(t.id==="dictSearch"){ui.dictS=t.value;const pos=t.selectionStart;render();const n=$("#dictSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}
 });
 let noteTimers={};

@@ -218,15 +218,25 @@ textarea{resize:vertical}
 .qswitch{display:flex;gap:8px}
 .qswitch button{width:22px;height:22px;border-radius:50%;border:0;background:var(--q);opacity:.45;padding:0}
 .qswitch button[aria-pressed="true"]{opacity:1;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--q)}
-.bhead{display:grid;gap:4px}
-.bubbles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;width:100%;max-width:340px;margin:0 auto}
-.bub{position:relative;aspect-ratio:1;border-radius:50%;border:0;padding:6px;display:grid;place-items:center;text-align:center;
-  font-weight:700;font-size:14px;line-height:1.15;color:var(--fg);background:color-mix(in srgb,var(--q) var(--k),var(--surface));
-  transition:transform .15s,box-shadow .15s;min-width:0}
-.bub.long{font-size:12.5px}
-.bub.foc{transform:scale(1.06)}
-.bub.sel{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--fg)}
-.bub .badge{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:12px;display:grid;place-items:center}
+.sheet.picker{--bg:#000;--surface:#1C1C1E;--surface-2:#2C2C2E;--fg:#F4F4F6;--muted:#9C9CA3;--line:#38383A;--ink:#F4F4F6;--on-ink:#000;
+  --q-red:#FF5F57;--q-yellow:#FFC940;--q-blue:#4D8EFF;--q-green:#34D399;background:#000;color:var(--fg);color-scheme:dark}
+.sheet.picker.grid{overflow:hidden}
+.sheet.picker.grid .sheet-in{height:100%;min-height:0;gap:10px}
+.qnow{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-height:30px}
+.qnow b{font-family:var(--font-display);font-weight:500;font-size:24px;line-height:1.1}
+.mwrap{position:relative;flex:1;min-height:180px;overflow:auto;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));scrollbar-width:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.mwrap::-webkit-scrollbar{display:none}
+.mgrid{display:grid;grid-template-columns:repeat(10,86px);grid-auto-rows:86px;gap:10px;padding:48px;width:max-content;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.mgrid.zoom{transform:scale(.55);opacity:0;transition:none}
+.mb{position:relative;border:0;border-radius:50%;padding:5px;display:grid;place-items:center;text-align:center;font-weight:700;font-size:13px;line-height:1.1;overflow-wrap:anywhere;transition:transform .15s,box-shadow .15s}
+.mb.long{font-size:11px}
+.mb.foc{transform:scale(1.14);z-index:1}
+.mb.sel{box-shadow:0 0 0 3px #000,0 0 0 6px #fff}
+.mb .badge{position:absolute;top:-2px;right:-2px;width:22px;height:22px;border-radius:50%;background:#fff;color:#000;font-size:12px;display:grid;place-items:center}
+.mb .badge:empty{display:none}
+.mres{flex:1;overflow:auto}
+.sheet.picker .bpanel{position:static;box-shadow:none}
+@media (prefers-reduced-motion: reduce){.mgrid,.mb{transition:none}}
 .bpanel{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);margin-top:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;gap:8px;box-shadow:0 10px 30px -10px rgba(0,0,0,.25)}
 .bp-name{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:22px;line-height:1.1}
 .bp-d{margin:0;font-size:14.5px}
@@ -326,6 +336,13 @@ const EMOTIONS=[
  ["zavist","Závist","red",2,3,"Touha mít to, co má někdo jiný, spojená s nepříjemným porovnáváním. Na rozdíl od žárlivosti jde o to, co nemáš."],
  ["trapnost","Trapnost","red",3,3,"Ostych, když máš pocit, že tě ostatní vidí v nepříjemné situaci. Chce se ti zmizet. Bývá chvilková a týká se situace, ne tebe celého."],
  ["sok","Šok","red",5,3,"Náhlé otřesení něčím nečekaným. Chvíli nevíš, co si myslet ani jak reagovat."],
+ ["rozruseni","Rozrušení","red",4,3,"Vnitřní zmatek a vzrušení z nepříjemné situace. Je těžké se uklidnit a soustředit."],
+ ["nedockavost","Nedočkavost","red",3,1,"Chceš, aby se něco stalo hned, a čekání tě dráždí."],
+ ["znechuceni","Znechucení","red",3,4,"Silný odpor k něčemu nebo někomu. Tělo se chce odvrátit."],
+ ["vydesenost","Vyděšenost","red",5,4,"Prudký strach, který tě zaskočí. Srdce se rozbuší a tělo ztuhne."],
+ ["pod-tlakem","Pod tlakem","red",4,3,"Okolí nebo ty sám(a) na sebe kladeš velké nároky a cítíš, jak tě to tlačí."],
+ ["popuzeni","Popuzení","red",3,2,"Rozladění, které se mění ve vztek. Někdo nebo něco tě vyvedlo z míry."],
+ ["nejistota","Nejistota","red",2,2,"Nevíš, co bude nebo jak se rozhodnout. Chybí pevná půda pod nohama."],
 
  ["radost","Radost","yellow",3,4,"Lehký, rozjasněný pocit, když se děje něco dobrého."],
  ["nadseni","Nadšení","yellow",4,4,"Radost plná energie a chuti se do něčeho pustit."],
@@ -345,6 +362,13 @@ const EMOTIONS=[
  ["stesti","Štěstí","yellow",3,5,"Hluboký pocit, že je život teď dobrý."],
  ["prekvapeni","Příjemné překvapení","yellow",5,3,"Něco nečekaného tě potěšilo."],
  ["cinorodost","Činorodost","yellow",4,2,"Máš plno energie a chuť dělat věci."],
+ ["uzas","Úžas","yellow",4,4,"Ohromení něčím krásným nebo velkolepým. Na chvíli se zastaví dech."],
+ ["okouzleni","Okouzlení","yellow",3,4,"Něco nebo někdo tě uchvátil a nemůžeš od toho odtrhnout pozornost."],
+ ["bujarost","Bujarost","yellow",5,4,"Rozjařená, hlasitá radost. Chce se ti tančit, zpívat nebo křičet."],
+ ["povznesenost","Povznesenost","yellow",3,5,"Lehkost a nadhled. Jako by ses zvedl(a) nad všední starosti."],
+ ["odvaha","Odvaha","yellow",4,2,"Ochota jít do něčeho, i když máš strach."],
+ ["poteseni","Potěšení","yellow",2,3,"Příjemný pocit z něčeho hezkého. Menší a tišší než radost."],
+ ["nadeje","Naděje","yellow",2,2,"Víra, že se může stát něco dobrého, i když to ještě není jisté. Na rozdíl od optimismu se týká konkrétní věci."],
 
  ["smutek","Smutek","blue",3,3,"Reakce na ztrátu nebo na to, že něco není, jak by sis přál(a). Zpomaluje a táhne dolů."],
  ["stesk","Stesk","blue",2,3,"Smutek za někým nebo něčím, co ti chybí. Je v něm láska i bolest z odloučení."],
@@ -365,6 +389,12 @@ const EMOTIONS=[
  ["odcizeni","Odcizení","blue",3,3,"Pocit, že nepatříš. Jsi oddělený(á) od ostatních nebo od sebe."],
  ["rozmrzelost","Rozmrzelost","blue",1,2,"Mrzutá, nevrlá nálada bez velké energie. Nic tě nebaví a všechno trochu vadí."],
  ["zranenost","Zraněnost","blue",2,4,"Bolest z toho, co ti někdo řekl nebo udělal."],
+ ["odmitnuti","Odmítnutí","blue",3,4,"Bolest z toho, že tě někdo nechtěl, nevybral nebo nepřijal."],
+ ["opustenost","Opuštěnost","blue",4,4,"Pocit, že tě všichni nechali být a nikdo na tebe nemyslí. Silnější a bolestnější než osamělost."],
+ ["vyhoreni","Vyhoření","blue",5,4,"Dlouhodobé vyčerpání z práce nebo péče o druhé. Nemáš z čeho brát a nic nedává smysl. Stojí za to říct si o pomoc."],
+ ["malomyslnost","Malomyslnost","blue",3,3,"Ztráta odvahy a víry v sebe. Nevěříš, že to zvládneš."],
+ ["zal","Žal","blue",4,5,"Hluboký smutek po ztrátě někoho nebo něčeho důležitého. Přichází ve vlnách."],
+ ["otupelost","Otupělost","blue",5,2,"Necítíš skoro nic, jako by byly emoce za sklem. Často přijde po velké zátěži."],
 
  ["klid","Klid","green",3,3,"Mysl i tělo jsou v pokoji, nic tě nežene."],
  ["uvolneni","Uvolnění","green",3,3,"Napětí povolilo a tělo změklo."],
@@ -384,6 +414,13 @@ const EMOTIONS=[
  ["lenoseni","Lenošení","green",4,2,"Nic nemusíš a užíváš si to."],
  ["soustredeni","Soustředění","green",1,2,"Jsi ponořený(á) do jedné věci a nic tě neruší."],
  ["laska","Láska","green",2,5,"Hluboká náklonnost a péče o někoho. Klidnější a stálejší než zamilovanost."],
+ ["pokora","Pokora","green",3,2,"Vědomí vlastních hranic a úcta k tomu, co je větší než ty."],
+ ["prijeti","Přijetí","green",3,4,"Jsi v pořádku takový(á), jaký(á) jsi, a ostatní tě tak berou."],
+ ["mir","Mír","green",4,4,"Hluboký vnitřní klid, kdy nic nechybí a nic netlačí."],
+ ["duvera","Důvěra","green",2,3,"Spoléháš na druhé nebo na sebe a nemusíš být ve střehu."],
+ ["pohodli","Pohodlí","green",4,3,"Je ti příjemně a teplo a nic nemusíš."],
+ ["zasnenost","Zasněnost","green",4,2,"Myšlenky volně plují, jsi trochu mimo a je to příjemné."],
+ ["odpocinutost","Odpočinutost","green",3,3,"Baterka je dobitá po spánku nebo odpočinku."],
 ].map(([id,n,q,e,p,d])=>({id,n,q,e,p,d}));
 
 const TAGCATS=[
@@ -877,9 +914,10 @@ function renderSheet(){
   const el=$("#sheet");
   const st=el.scrollTop;
   el.innerHTML=`<div class="sheet-in">${({flow:sheetFlow,detail:sheetDetail,writer:sheetWriter,pin:sheetPin,text:sheetText})[s.type]()}</div>`;
-  const tint=s.type==="flow"&&s.step===1&&s.q;
-  el.style.background=tint?`color-mix(in srgb,var(--q-${s.q}) 13%,var(--bg))`:"";
+  el.classList.toggle("picker",s.type==="flow"&&s.step===1);
+  el.classList.toggle("grid",s.type==="flow"&&s.step===1&&!!s.q);
   if(s.type==="flow"&&s.step==="ex"){runExercise()}
+  if(s.type==="flow"&&s.step===1&&s.q){initGrid();return}
   el.scrollTop=st;
 }
 
@@ -887,7 +925,7 @@ function renderSheet(){
 function openFlow(entry,q){
   const e=entry?clone(entry):null;
   openSheet({type:"flow",step:1,id:e?e.id:null,x:e?e.x:null,y:e?e.y:null,q:e?e.q:null,emos:e?e.emos||[]:[],focus:e&&e.emos&&e.emos[0]||null,
-    tags:e?e.tags||[]:[],note:e?e.note||"":"",ts:e?e.ts:Date.now(),helped:e?e.helped||null:null,searchOn:false,search:"",prompt:Math.floor(Math.random()*PROMPTS.length),editing:!!e});
+    tags:e?e.tags||[]:[],note:e?e.note||"":"",ts:e?e.ts:Date.now(),helped:e?e.helped||null:null,prompt:Math.floor(Math.random()*PROMPTS.length),editing:!!e});
   if(q&&!e){ui.sheet.q=q;renderSheet()}
 }
 function flowTop(step,max){
@@ -896,7 +934,7 @@ function flowTop(step,max){
 }
 function sheetFlow(){
   const f=ui.sheet;
-  if(f.step===1) return f.q?bubbleScreen():flowTop(1,3)+`<h2 class="flow-h">Jak se teď cítíš?</h2>
+  if(f.step===1) return f.q?gridScreen():flowTop(1,3)+`<h2 class="flow-h">Jak se teď cítíš?</h2>
    <p class="flow-sub">Vyber barvu, která nejlíp odpovídá tvé energii a náladě.</p>${quadPicker()}`;
   if(f.step===2){
     return flowTop(2,3)+`<h2 class="flow-h">Co se kolem tebe děje?</h2><p class="flow-sub">Nepovinné. Štítky pomohou najít, co tvou náladu ovlivňuje.</p>
@@ -954,40 +992,85 @@ function quadPicker(){
     <div class="qax">↓ méně energie</div>
     <div class="qax-x"><span>← nepříjemné</span><span>příjemné →</span></div></div>`;
 }
+const PICK={red:"#FF5F57",yellow:"#FFC940",blue:"#4D8EFF",green:"#34D399"},CELL=86,GAP=10,PAD=48;
 function bubbleOrder(q){
   const d=Q[q],eK=e=>d.hi?-e.e:e.e,pK=e=>d.pl?e.p:-e.p;
-  const l=allEmotions().filter(e=>e.q===q).sort((a,b)=>eK(a)-eK(b)||pK(a)-pK(b));
-  const rows=[];for(let i=0;i<l.length;i+=3)rows.push(l.slice(i,i+3).sort((a,b)=>pK(a)-pK(b)));
+  const l=allEmotions().filter(e=>e.q===q).sort((a,b)=>eK(a)-eK(b)||pK(a)-pK(b)||a.n.localeCompare(b.n,"cs"));
+  const rows=[];for(let i=0;i<l.length;i+=5)rows.push(l.slice(i,i+5).sort((a,b)=>pK(a)-pK(b)));
   return rows.flat();
 }
-function bubble(e){
-  const f=ui.sheet,i=f.emos.indexOf(e.id),k=Math.round(14+(((e.e||3)+(e.p||3))-2)/8*80);
-  return `<button class="bub ${i>=0?"sel":""} ${f.focus===e.id?"foc":""} ${e.n.length>11?"long":""}" style="${qv(e.q)};--k:${k}%" data-a="emo" data-id="${e.id}" aria-pressed="${i>=0}">${esc(e.n)}${i>=0?`<span class="badge">${i+1}</span>`:""}</button>`;
+function buildGrid(){
+  const ord={};QS.forEach(q=>ord[q]=bubbleOrder(q));
+  const rows=q=>Math.ceil(ord[q].length/5);
+  const Rt=Math.max(rows("red"),rows("yellow"),1),Rb=Math.max(rows("blue"),rows("green"),1);
+  const cells=[];
+  QS.forEach(q=>{const d=Q[q],l=ord[q],n=rows(q);
+    l.forEach((e,i)=>{const ri=Math.floor(i/5),ci=i%5;cells.push({e,r:d.hi?(Rt-n)+ri:Rt+ri,c:d.pl?5+ci:ci,mid:i===Math.min(12,l.length-1)?q:""})})});
+  return {cells,R:Rt+Rb,Rt};
+}
+function hexRgb(h){const n=parseInt(h.slice(1),16);return [n>>16&255,n>>8&255,n&255]}
+function mixHex(a,b,t){const A=hexRgb(a),B=hexRgb(b);return A.map((v,i)=>Math.round(v+(B[i]-v)*t))}
+function gridScreen(){
+  const f=ui.sheet,G=buildGrid();ui.grid=G;
+  const cells=G.cells.map(({e,r,c,mid})=>{
+    const d=Math.hypot(r+.5-G.Rt,c+.5-5),k=Math.min(1,Math.max(0,(d-.7)/5.6));
+    const rgb=mixHex(PICK[e.q],"#2C2C2E",(1-k)*.78),lum=(.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2])/255;
+    return `<button class="mb ${e.n.length>10?"long":""}" data-a="emo" data-id="${e.id}" ${mid?`data-mid="${mid}"`:""} style="grid-row:${r+1};grid-column:${c+1};background:rgb(${rgb});color:${lum>.55?"#111":"#fff"}">${esc(e.n)}<span class="badge"></span></button>`}).join("");
+  return `<div class="sheet-top"><button class="btn ghost" data-a="q-back">‹ Barvy</button>
+    <div class="qswitch" role="group" aria-label="Přejít na barvu">${QS.map(q=>`<button data-a="pick-q" data-q="${q}" style="${qv(q)}" aria-label="${Q[q].name}"></button>`).join("")}</div>
+    <button class="btn ghost" data-a="sheet-close">Zavřít</button></div>
+   <div class="qnow" id="qnow"></div>
+   <input type="search" id="emoSearch" placeholder="Hledat emoci podle názvu…" aria-label="Hledat emoci">
+   <div class="mres" id="mres" hidden></div>
+   <div class="mwrap" id="mwrap"><div class="mgrid" id="mgrid" style="grid-template-rows:repeat(${G.R},${CELL}px)">${cells}</div></div>
+   <div class="bpanel" id="bpanel"></div>`;
+}
+let gridRaf=0;
+function centerOn(el,smooth){const w=$("#mwrap");if(!w||!el)return;w.scrollTo({left:el.offsetLeft+el.offsetWidth/2-w.clientWidth/2,top:el.offsetTop+el.offsetHeight/2-w.clientHeight/2,behavior:smooth?"smooth":"auto"})}
+function scrollToQuad(q,smooth){centerOn(document.querySelector(`.mb[data-mid="${q}"]`),smooth)}
+function initGrid(){
+  const f=ui.sheet,w=$("#mwrap"),g=$("#mgrid");if(!w)return;
+  const t=f.focus&&document.querySelector(`.mb[data-id="${f.focus}"]`);
+  if(t)centerOn(t,false);else scrollToQuad(f.q,false);
+  w.addEventListener("scroll",()=>{cancelAnimationFrame(gridRaf);gridRaf=requestAnimationFrame(updQuadNow)},{passive:true});
+  if(f.zoom&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    g.style.transformOrigin=(w.scrollLeft+w.clientWidth/2)+"px "+(w.scrollTop+w.clientHeight/2)+"px";
+    g.classList.add("zoom");g.getBoundingClientRect();
+    requestAnimationFrame(()=>{g.style.transition="";g.classList.remove("zoom")})}
+  f.zoom=false;updQuadNow();updatePicker();
+}
+function updQuadNow(){
+  const f=ui.sheet,w=$("#mwrap");if(!f||!w||!ui.grid||!$("#qnow"))return;
+  const sx=PAD+5*(CELL+GAP)-GAP/2,sy=PAD+ui.grid.Rt*(CELL+GAP)-GAP/2;
+  const cx=w.scrollLeft+w.clientWidth/2,cy=w.scrollTop+w.clientHeight/2;
+  f.q=cy<sy?(cx<sx?"red":"yellow"):(cx<sx?"blue":"green");
+  $("#qnow").innerHTML=`<span class="qdot" style="${qv(f.q)};width:12px;height:12px"></span><b>${Q[f.q].name}</b><span class="small muted">${Q[f.q].sub}</span>`;
+  document.querySelectorAll(".qswitch button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.q===f.q)));
+}
+function updatePicker(){
+  const f=ui.sheet;if(!$("#bpanel"))return;
+  document.querySelectorAll(".mb").forEach(b=>{const i=f.emos.indexOf(b.dataset.id);b.classList.toggle("sel",i>=0);b.classList.toggle("foc",b.dataset.id===f.focus);
+    b.setAttribute("aria-pressed",String(i>=0));b.querySelector(".badge").textContent=i>=0?String(i+1):""});
+  const fm=f.focus&&emo(f.focus);
+  $("#bpanel").innerHTML=(fm?infoPanel(fm):`<p class="muted small" style="margin:0">Posouvej mřížku prstem a ťukni na slovo, které sedí. Ukáže se, co znamená. Vybrat můžeš až tři.</p>`)+
+    `<div class="bp-actions"><button class="linkbtn small" data-a="flow-skip-emo">Nevím, jak to pojmenovat</button>
+     <button class="btn primary" data-a="flow-next" ${f.emos.length?"":"disabled"}>Dál →</button></div>`;
+}
+function updateSearch(v){
+  const r=$("#mres"),w=$("#mwrap"),s=norm(v.trim());if(!r)return;
+  if(!s){r.hidden=true;w.hidden=false;return}
+  const l=allEmotions().filter(e=>norm(e.n).includes(s));
+  r.innerHTML=l.length?`<div class="chips">${l.map(e=>`<button class="chip" data-a="emo-find" data-id="${e.id}" style="${qv(e.q)}"><span class="qdot"></span> ${esc(e.n)}</button>`).join("")}</div>`
+    :`<p class="muted">Nic nenalezeno. Vlastní emoci přidáš ve Více › Slovník emocí.</p>`;
+  r.hidden=false;w.hidden=true;
 }
 function infoPanel(fm){
   const f=ui.sheet,note=(S.settings.emotionNotes||{})[fm.id];
   return `<div class="bp-name"><span class="qdot" style="${qv(fm.q)}"></span>${esc(fm.n)}</div><p class="bp-d">${esc(fm.d||"")}</p>
     ${note?`<p class="mine">Pro mě: ${esc(note)}</p>`:""}
     <div class="bp-sim"><span class="small muted">Podobné:</span>${similar(fm).map(x=>`<button class="chip small-chip" data-a="emo-peek" data-id="${x.id}" style="${qv(x.q)}">${esc(x.n)}</button>`).join("")}</div>
-    ${f.emos.includes(fm.id)?"":`<button class="btn" data-a="emo" data-id="${fm.id}">Vybrat ${esc(fm.n.toLowerCase())}</button>`}`;
+    ${f.emos.includes(fm.id)?"":`<div><button class="btn" data-a="emo" data-id="${fm.id}">Vybrat ${esc(fm.n.toLowerCase())}</button></div>`}`;
 }
-function bubbleScreen(){
-  const f=ui.sheet,s=norm(f.search.trim());
-  const list=f.searchOn&&s?allEmotions().filter(e=>norm(e.n).includes(s)):bubbleOrder(f.q);
-  const fm=f.focus&&emo(f.focus);
-  return `<div class="sheet-top"><button class="btn ghost" data-a="q-back">‹ Barvy</button>
-    <div class="qswitch" role="group" aria-label="Barva nálady">${QS.map(q=>`<button data-a="pick-q" data-q="${q}" style="${qv(q)}" aria-label="${Q[q].name}" aria-pressed="${q===f.q}"></button>`).join("")}</div>
-    <button class="btn ghost" data-a="sheet-close">Zavřít</button></div>
-   <div class="bhead"><div class="label" style="color:var(--q-${f.q})">${Q[f.q].name} · ${Q[f.q].sub}</div>
-    <h2 class="flow-h">Která emoce sedí nejlíp?</h2></div>
-   ${f.searchOn?`<input type="search" id="emoSearch" placeholder="Napiš název emoce…" value="${esc(f.search)}" aria-label="Hledat emoci">`
-     :`<button class="linkbtn small" data-a="emo-search" style="align-self:flex-start">Hledat emoci podle názvu</button>`}
-   <div class="bubbles">${list.map(bubble).join("")||`<p class="muted">Nic nenalezeno. Vlastní emoci přidáš ve Více › Slovník emocí.</p>`}</div>
-   <div class="bpanel">${fm?infoPanel(fm):`<p class="muted small" style="margin:0">Ťukni na slovo. Ukáže se, co znamená. Vybrat můžeš až tři.</p>`}
-    <div class="bp-actions"><button class="linkbtn small" data-a="flow-skip-emo">Nevím, jak to pojmenovat</button>
-    <button class="btn primary" data-a="flow-next" ${f.emos.length?"":"disabled"}>Dál</button></div></div>`;
-}
-
 /* — cvičení — */
 let breathT=null;
 function stopBreath(){if(breathT){clearTimeout(breathT);breathT=null}}
@@ -1170,9 +1253,11 @@ async function wipeAll(){
 const A={
   tab:t=>{location.hash=t.dataset.tab;if(t.dataset.tab==="vice"){ui.more=null}setTabFromHash();render();window.scrollTo(0,0)},
   new:t=>openFlow(null,t.dataset.q||null),
-  "pick-q":t=>{const f=ui.sheet;f.q=t.dataset.q;f.searchOn=false;f.search="";if(f.focus&&emo(f.focus)?.q!==f.q)f.focus=null;renderSheet();$("#sheet").scrollTop=0},
+  "pick-q":t=>{const f=ui.sheet;if($("#mwrap")){const si=$("#emoSearch");if(si&&si.value){si.value="";updateSearch("")}scrollToQuad(t.dataset.q,true);return}
+    f.q=t.dataset.q;f.zoom=true;renderSheet()},
+  "emo-find":t=>{const f=ui.sheet,id=t.dataset.id;if(!f.emos.includes(id)){if(f.emos.length>=3){toast("Vyber nejvýš 3 emoce");return}f.emos.push(id)}f.focus=id;
+    $("#emoSearch").value="";updateSearch("");updatePicker();requestAnimationFrame(()=>centerOn(document.querySelector(`.mb[data-id="${id}"]`),true))},
   "q-back":()=>{ui.sheet.q=null;renderSheet();$("#sheet").scrollTop=0},
-  "emo-search":()=>{ui.sheet.searchOn=true;renderSheet();const n=$("#emoSearch");if(n)n.focus()},
   "flow-skip-emo":()=>{const f=ui.sheet;f.emos=[];f.focus=null;f.step=2;renderSheet();$("#sheet").scrollTop=0},
   "sheet-close":()=>closeSheet(),
   "flow-back":()=>{const f=ui.sheet;readFlowInputs();f.step=f.step-1;renderSheet()},
@@ -1180,8 +1265,8 @@ const A={
   emo:t=>{const f=ui.sheet,id=t.dataset.id;const i=f.emos.indexOf(id);
     if(i>=0){f.emos.splice(i,1);f.focus=f.emos[f.emos.length-1]||null}
     else{if(f.emos.length>=3){toast("Vyber nejvýš 3 emoce");return}f.emos.push(id);f.focus=id}
-    renderSheet()},
-  "emo-peek":t=>{ui.sheet.focus=t.dataset.id;renderSheet()},
+    updatePicker()},
+  "emo-peek":t=>{ui.sheet.focus=t.dataset.id;updatePicker();centerOn(document.querySelector(`.mb[data-id="${t.dataset.id}"]`),true)},
   tag:t=>{const f=ui.sheet,v=t.dataset.t,i=f.tags.indexOf(v);if(i>=0)f.tags.splice(i,1);else f.tags.push(v);
     t.classList.toggle("sel",i<0);t.setAttribute("aria-pressed",String(i<0))},
   "tag-add":async()=>{const inp=$("#newTag"),v=inp.value.trim();if(!v)return;const f=ui.sheet;
@@ -1274,7 +1359,7 @@ function readWriter(){const w=ui.sheet;const t=$("#wTitle"),x=$("#wText");if(t)w
 document.addEventListener("click",ev=>{const t=ev.target.closest("[data-a]");if(!t)return;const fn=A[t.dataset.a];if(fn){ev.preventDefault();fn(t,ev)}});
 document.addEventListener("input",ev=>{
   const t=ev.target;
-  if(t.id==="emoSearch"&&ui.sheet){ui.sheet.search=t.value;const pos=t.selectionStart;renderSheet();const n=$("#emoSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}
+  if(t.id==="emoSearch"&&ui.sheet){updateSearch(t.value)}
   else if(t.id==="noteTa"&&ui.sheet)ui.sheet.note=t.value;
   if(["noteTa","wText","wTitle"].includes(t.id)){clearTimeout(draftT);draftT=setTimeout(saveDraft,600)}
   if(t.id==="wSearch"){ui.ws=t.value;const pos=t.selectionStart;render();const n=$("#wSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}

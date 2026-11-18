@@ -3,7 +3,7 @@
 Český deník emocí inspirovaný aplikací How We Feel. Celá aplikace je v jednom souboru `index.html` (bez závislostí), publikovaná jako claude.ai artifact.
 
 ## Co umí
-- **Mapa nálady**: energie × příjemnost ve čtyřech barvách (Napětí, Rozzáření, Útlum, Klid) a 72 českých emocí s vysvětlením.
+- **Výběr emoce jako v How We Feel**: nejdřív jedna ze čtyř barev (Napětí, Rozzáření, Útlum, Klid), pak mřížka bublin se 72 českými emocemi seřazenými podle energie a příjemnosti, s vysvětlením.
 - **Kontext**: štítky (kde, s kým, co dělám, pocity v těle, zdraví a spánek, počasí) a vlastní štítky.
 - **Porozumění emocím**: u každé emoce podobné emoce pro srovnání, na hlavní obrazovce emoce dne.
 - **Psaní**: poznámky a básně k záznamům i samostatně, podněty k psaní, diktování, automatické ukládání konceptů, večerní ohlédnutí, vzpomínky na starší texty a hledání.
